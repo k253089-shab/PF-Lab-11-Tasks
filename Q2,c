@@ -1,0 +1,193 @@
+#include <stdio.h>
+#include <string.h>
+
+struct Date {
+    int day, month, year;
+};
+
+struct Transaction {
+    char type[15];
+    float amount;
+    struct Date date;
+};
+
+struct Account {
+    int accNo;
+    char name[50];
+    char type[20];
+    float balance;
+
+    struct Date creationDate;
+    struct Date lastTransactionDate;
+
+    struct Transaction transactions[50];
+    int tCount;
+};
+
+void createAccount(struct Account *a) {
+    printf("\nEnter Account Number: ");
+    scanf("%d", &a->accNo);
+
+    printf("Enter Name: ");
+    scanf(" %[^\n]", a->name);
+
+    printf("Enter Account Type (Savings/Current/Fixed): ");
+    scanf("%s", a->type);
+
+    printf("Enter Creation Date (dd mm yyyy): ");
+    scanf("%d %d %d", &a->creationDate.day,
+                      &a->creationDate.month,
+                      &a->creationDate.year);
+
+    a->lastTransactionDate = a->creationDate;
+    a->tCount = 0;
+
+    if(strcmp(a->type, "Savings") == 0)
+        a->balance = 1000;
+    else if(strcmp(a->type, "Current") == 0)
+        a->balance = 5000;
+    else
+        a->balance = 10000;
+
+    printf("Minimum Balance Initialized: %.2f\n", a->balance);
+}
+
+void deposit(struct Account *a) {
+    float amount;
+    printf("Enter deposit amount: ");
+    scanf("%f", &amount);
+
+    a->balance += amount;
+
+    struct Transaction t;
+    strcpy(t.type, "Deposit");
+    t.amount = amount;
+    printf("Enter transaction date (dd mm yyyy): ");
+    scanf("%d %d %d", &t.date.day, &t.date.month, &t.date.year);
+
+    a->lastTransactionDate = t.date;
+    a->transactions[a->tCount++] = t;
+
+    printf("Deposit Successful\n");
+}
+
+void withdraw(struct Account *a) {
+    float amount;
+    float min;
+
+    if(strcmp(a->type, "Savings") == 0) min = 1000;
+    else if(strcmp(a->type, "Current") == 0) min = 5000;
+    else min = 10000;
+
+    printf("Enter withdrawal amount: ");
+    scanf("%f", &amount);
+
+    if(a->balance - amount < min) {
+        printf("Insufficient balance! Minimum balance must remain %.2f\n", min);
+        return;
+    }
+
+    a->balance -= amount;
+
+    struct Transaction t;
+    strcpy(t.type, "Withdrawal");
+    t.amount = amount;
+    printf("Enter transaction date (dd mm yyyy): ");
+    scanf("%d %d %d", &t.date.day, &t.date.month, &t.date.year);
+
+    a->lastTransactionDate = t.date;
+    a->transactions[a->tCount++] = t;
+
+    printf("Withdrawal Successful\n");
+}
+
+void applyInterest(struct Account *a) {
+    float rate = 0;
+
+    if(strcmp(a->type, "Savings") == 0) rate = 0.04;
+    else if(strcmp(a->type, "Fixed") == 0) rate = 0.07;
+
+    float interest = a->balance * rate;
+    a->balance += interest;
+
+    printf("Interest Applied: %.2f\n", interest);
+}
+
+void displayAccount(struct Account a) {
+    printf("\nAccount No: %d", a.accNo);
+    printf("\nName: %s", a.name);
+    printf("\nType: %s", a.type);
+    printf("\nBalance: %.2f", a.balance);
+
+    printf("\nCreation Date: %d/%d/%d",
+           a.creationDate.day, a.creationDate.month, a.creationDate.year);
+
+    printf("\nLast Transaction Date: %d/%d/%d\n",
+           a.lastTransactionDate.day,
+           a.lastTransactionDate.month,
+           a.lastTransactionDate.year);
+}
+
+void showTransactions(struct Account a) {
+    printf("\nTransaction History:\n");
+
+    for(int i = 0; i < a.tCount; i++) {
+        printf("%s  %.2f  %d/%d/%d\n",
+               a.transactions[i].type,
+               a.transactions[i].amount,
+               a.transactions[i].date.day,
+               a.transactions[i].date.month,
+               a.transactions[i].date.year);
+    }
+}
+
+int main() {
+    struct Account acc[20];
+    int n = 0, choice, id;
+
+    while(1) {
+        printf("\n\n1. Create Account");
+        printf("\n2. Deposit");
+        printf("\n3. Withdraw");
+        printf("\n4. Apply Interest");
+        printf("\n5. Display Account");
+        printf("\n6. Transaction History");
+        printf("\n7. Exit");
+        printf("\nEnter Choice: ");
+        scanf("%d", &choice);
+
+        if(choice == 1) {
+            createAccount(&acc[n]);
+            n++;
+        }
+        else if(choice == 2) {
+            printf("Enter Account Index: ");
+            scanf("%d", &id);
+            deposit(&acc[id]);
+        }
+        else if(choice == 3) {
+            printf("Enter Account Index: ");
+            scanf("%d", &id);
+            withdraw(&acc[id]);
+        }
+        else if(choice == 4) {
+            printf("Enter Account Index: ");
+            scanf("%d", &id);
+            applyInterest(&acc[id]);
+        }
+        else if(choice == 5) {
+            printf("Enter Account Index: ");
+            scanf("%d", &id);
+            displayAccount(acc[id]);
+        }
+        else if(choice == 6) {
+            printf("Enter Account Index: ");
+            scanf("%d", &id);
+            showTransactions(acc[id]);
+        }
+        else
+            break;
+    }
+
+    return 0;
+}
